@@ -82,6 +82,7 @@ const CreateProduct = () => {
     message: "",
     severity: "success",
   });
+  const [imageError, setImageError] = useState(false); // New state for image error
 
   const handleChange = (event) => {
     const { name, value, checked, type } = event.target;
@@ -103,12 +104,17 @@ const CreateProduct = () => {
       reader.onloadend = () => {
         setImagePreview(reader.result);
       };
+      setImageError(false); // Reset image error if a file is selected
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!imageFile) {
+      setImageError(true); // Set image error if no file is selected
+      return;
+    }
     setConfirmOpen(true);
   };
 
@@ -216,6 +222,15 @@ const CreateProduct = () => {
                     sx={{ mt: 1, textAlign: "center" }}
                   >
                     {imageFile.name}
+                  </Typography>
+                )}
+                {imageError && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 1, textAlign: "center" }}
+                  >
+                    Image upload is required
                   </Typography>
                 )}
               </Box>

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose"; // Import mongoose
 
 const productSchema = new mongoose.Schema(
   {
@@ -15,11 +15,13 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Middleware to update the updatedAt field before saving
 productSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
+// Create the Product model
 const Product = mongoose.model("Product", productSchema);
 
-module.exports = Product;
+export default Product; // Export the Product model

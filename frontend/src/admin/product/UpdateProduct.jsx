@@ -1,63 +1,67 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import {
+  Box,
   Container,
-  Paper,
   Typography,
-  Grid,
   TextField,
   Button,
-  Snackbar,
-  CircularProgress,
-  Box,
-  FormControlLabel,
   Switch,
+  FormControlLabel,
   InputAdornment,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
+  Paper,
+  Snackbar,
+  CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { useNavigate, useParams } from "react-router-dom";
 import MuiAlert from "@mui/material/Alert";
+import axios from "axios";
 
-// Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  borderRadius: 16,
-  boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
+  backgroundColor: "#f8f9fa",
+  padding: theme.spacing(3),
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+  height: "calc(100vh - 48px)", // Subtract some padding
+  display: "flex",
+  flexDirection: "column",
+}));
+
+const ImageUploader = styled(Box)(({ theme }) => ({
+  width: "100%",
+  height: "100%",
+  border: "2px dashed #ced4da",
+  borderRadius: "4px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  transition: "background-color 0.3s",
+  "&:hover": {
+    backgroundColor: "#e9ecef",
+  },
 }));
 
 const ImagePreview = styled("img")({
-  width: "100%",
-  height: 300,
-  objectFit: "cover",
-  borderRadius: 8,
-  cursor: "pointer",
+  maxWidth: "100%",
+  maxHeight: "100%",
+  objectFit: "contain",
+  borderRadius: "4px",
 });
 
-const ImagePlaceholder = styled(Box)(({ theme }) => ({
-  width: "100%",
-  height: 300,
-  backgroundColor: "#f0f0f0",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 8,
-  cursor: "pointer",
-  "&:hover": {
-    backgroundColor: "#e0e0e0",
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  marginBottom: theme.spacing(2),
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "4px",
   },
 }));
-
-const StyledTextField = styled(TextField)({
-  marginBottom: 16,
-  "& .MuiOutlinedInput-root": {
-    borderRadius: 8,
-  },
-});
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
@@ -71,21 +75,19 @@ const UpdateProduct = () => {
     category: "",
     inStock: false,
     stockQuantity: "",
-    rating: 0,
     imageUrl: "",
   });
 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  const [confirmDialog, setConfirmDialog] = useState(false);
 
-  // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -132,12 +134,12 @@ const UpdateProduct = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setConfirmDialog(true);
+    setConfirmOpen(true);
   };
 
   const handleConfirmUpdate = async () => {
-    setConfirmDialog(false);
     setLoading(true);
+    setConfirmOpen(false);
 
     try {
       const formData = new FormData();
@@ -185,83 +187,87 @@ const UpdateProduct = () => {
     navigate("/admin/products");
   };
 
-  const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+  const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <StyledPaper elevation={3}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ textAlign: "center", fontWeight: "bold", marginBottom: 4 }}
-          >
-            Update Product
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={4}>
-              {/* Left Side: Image */}
-              <Grid item xs={12} md={6}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  style={{ display: "none" }}
-                />
-                {imagePreview ? (
-                  <ImagePreview
-                    src={imagePreview}
-                    alt="Product preview"
-                    onClick={handleImageClick}
+    <Container maxWidth="lg" sx={{ py: 2, height: "100vh" }}>
+      <StyledPaper>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: 300, textAlign: "center", mb: 3 }}
+        >
+          Update Product
+        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+        >
+          <Grid container spacing={3} sx={{ flexGrow: 1 }}>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <ImageUploader onClick={handleImageClick}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    style={{ display: "none" }}
                   />
-                ) : (
-                  <ImagePlaceholder onClick={handleImageClick}>
-                    <Typography variant="h6">
+                  {imagePreview ? (
+                    <ImagePreview src={imagePreview} alt="Product preview" />
+                  ) : (
+                    <Typography variant="body1" color="textSecondary">
                       Click or drag to upload image
                     </Typography>
-                  </ImagePlaceholder>
+                  )}
+                </ImageUploader>
+                {imageFile && (
+                  <Typography
+                    variant="caption"
+                    sx={{ mt: 1, textAlign: "center" }}
+                  >
+                    {imageFile.name}
+                  </Typography>
                 )}
-                <Typography variant="caption" display="block" gutterBottom>
-                  {imageFile
-                    ? `Selected file: ${imageFile.name}`
-                    : "No file selected"}
-                </Typography>
-              </Grid>
-
-              {/* Right Side: Form Fields */}
-              <Grid item xs={12} md={6}>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                }}
+              >
                 <StyledTextField
-                  required
                   fullWidth
+                  required
                   label="Product Name"
                   name="name"
                   value={product.name}
                   onChange={handleChange}
                 />
                 <StyledTextField
-                  required
                   fullWidth
+                  required
                   label="Category"
                   name="category"
                   value={product.category}
                   onChange={handleChange}
                 />
                 <StyledTextField
-                  required
                   fullWidth
+                  required
                   multiline
                   rows={4}
                   label="Description"
@@ -270,8 +276,8 @@ const UpdateProduct = () => {
                   onChange={handleChange}
                 />
                 <StyledTextField
-                  required
                   fullWidth
+                  required
                   type="number"
                   label="Price"
                   name="price"
@@ -293,11 +299,12 @@ const UpdateProduct = () => {
                     />
                   }
                   label="In Stock"
+                  sx={{ mb: 2 }}
                 />
                 {product.inStock && (
                   <StyledTextField
-                    required
                     fullWidth
+                    required
                     type="number"
                     label="Stock Quantity"
                     name="stockQuantity"
@@ -305,72 +312,75 @@ const UpdateProduct = () => {
                     onChange={handleChange}
                   />
                 )}
-              </Grid>
+              </Box>
             </Grid>
-
-            {/* Action Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                mt: 4,
-                gap: 2,
-              }}
+          </Grid>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              mt: "auto",
+              pt: 2,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={handleCancel}
+              sx={{ borderRadius: "4px" }}
             >
-              <Button
-                variant="outlined"
-                onClick={handleCancel}
-                sx={{ borderRadius: 4 }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={loading}
-                sx={{ borderRadius: 4 }}
-              >
-                {loading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  "Update Product"
-                )}
-              </Button>
-            </Box>
-          </form>
-        </StyledPaper>
-      </Box>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: "4px",
+                backgroundColor: "#e53e3e",
+                "&:hover": { backgroundColor: "#c53030" },
+              }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : "Update Product"}
+            </Button>
+          </Box>
+        </Box>
+      </StyledPaper>
 
-      {/* Snackbar for alerts */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <MuiAlert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          elevation={6}
-          variant="filled"
-        >
+        <MuiAlert elevation={6} variant="filled" severity={snackbar.severity}>
           {snackbar.message}
         </MuiAlert>
       </Snackbar>
 
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)}>
-        <DialogTitle>Confirm Update</DialogTitle>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title">
+          Confirm Product Update
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="confirm-dialog-description">
             Are you sure you want to update this product?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)}>Cancel</Button>
-          <Button onClick={handleConfirmUpdate} color="primary">
-            Confirm
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleConfirmUpdate}
+            color="primary"
+            variant="contained"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>

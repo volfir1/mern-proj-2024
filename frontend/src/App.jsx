@@ -1,22 +1,22 @@
 import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import ProductsDemo from "./admin/product/Products";
 import Suppliers from "./admin/supplier/Suppliers";
 import CreateProduct from "./admin/product/CreateProduct";
 import UpdateProduct from "./admin/product/UpdateProduct";
-import { ThemeProvider } from "./components/theme/ThemeContext";
+import Settings from "./components/others/Settings";
+import { ThemeProvider } from "./components/others/Theme"; // Make sure this is correct
 
 const App = () => {
-  const location = useLocation(); // Get the current location
-
   return (
-    <ThemeProvider>
+    <div className="app-wrapper">
+      {" "}
+      {/* This div will be the container */}
       <div className="flex">
-        {/* Sidebar */}
+        {/* Sidebar - You can add your Sidebar here */}
 
-        {/* Pass SidebarData to Sidebar component */}
         <div className="content flex-grow">
-          {/* Render the ProductsDemo or Suppliers component based on the path */}
+          {/* Routes will apply dark mode across all pages */}
           <Routes>
             <Route path="/admin/products" element={<ProductsDemo />} />
             <Route path="/admin/suppliers" element={<Suppliers />} />
@@ -25,11 +25,12 @@ const App = () => {
               path="/admin/products/update/:id"
               element={<UpdateProduct />}
             />
-            {/* Add more routes here if needed */}
+            <Route path="/admin/settings" element={<Settings />} />
+            {/* Add more routes here */}
           </Routes>
         </div>
       </div>
-    </ThemeProvider>
+    </div>
   );
 };
 

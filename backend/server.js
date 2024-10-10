@@ -1,9 +1,16 @@
 // server.js
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-const connectDatabase = require("./config/database");
-const productRoutes = require("./routes/prodRoutes");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import connectDatabase from "./config/database.js";
+import productRoutes from "./routes/prodRoutes.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: `${__dirname}/.env` });
 
 const app = express();
 const port = process.env.PORT || 3000;

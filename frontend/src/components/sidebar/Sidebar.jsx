@@ -7,7 +7,7 @@ import {
   ArchiveBoxIcon,
   TruckIcon,
   UsersIcon,
-  SunIcon,
+  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
@@ -18,11 +18,11 @@ const SidebarItem = ({ icon, title, link, isOpen }) => {
       className="group relative flex items-center p-2 mt-2 cursor-pointer transition-all duration-200 hover:bg-red-500 hover:text-white"
       onClick={() => navigate(link)}
     >
-      <div className="flex items-center justify-center min-w-[60px] group-hover:text-white">
+      <div className="flex items-center justify-center min-w-[60px] group-hover:text-white text-gray-800">
         {icon}
       </div>
       <span
-        className={`font-light transition-all duration-200 ${
+        className={`font-light transition-all duration-200 text-gray-800 group-hover:text-white ${
           isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
         }`}
       >
@@ -34,7 +34,6 @@ const SidebarItem = ({ icon, title, link, isOpen }) => {
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const sidebarRef = useRef(null);
 
   useEffect(() => {
@@ -55,8 +54,6 @@ export default function Sidebar() {
     };
   }, []);
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
-
   return (
     <div
       ref={sidebarRef}
@@ -66,7 +63,7 @@ export default function Sidebar() {
     >
       <div className="flex items-center justify-between p-4 overflow-hidden border-b border-gray-200">
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-red-500 text-white rounded-none flex items-center justify-center font-bold flex-shrink-0">
+          <div className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
             L
           </div>
           <div
@@ -125,32 +122,12 @@ export default function Sidebar() {
 
       <div className="absolute bottom-4 left-0 w-full overflow-hidden border-t border-gray-200 pt-4">
         <ul className="space-y-2">
-          <li className="flex items-center p-2 cursor-pointer">
-            <div className="flex items-center justify-center min-w-[60px] text-gray-700">
-              <SunIcon className="w-6 h-6" />
-            </div>
-            <div
-              className={`flex items-center justify-between flex-grow transition-all duration-300 ${
-                isOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
-              }`}
-            >
-              <span className="text-gray-800 whitespace-nowrap font-light">
-                Light Mode
-              </span>
-              <div
-                className={`w-12 h-6 flex items-center bg-gray-300 rounded-none p-1 cursor-pointer ${
-                  isDarkMode ? "bg-gray-600" : ""
-                }`}
-                onClick={toggleDarkMode}
-              >
-                <div
-                  className={`bg-white w-4 h-4 shadow-md transform transition-transform duration-300 ${
-                    isDarkMode ? "translate-x-6" : ""
-                  }`}
-                />
-              </div>
-            </div>
-          </li>
+          <SidebarItem
+            icon={<Cog6ToothIcon className="w-6 h-6" />}
+            title="Settings"
+            link="/admin/settings"
+            isOpen={isOpen}
+          />
           <SidebarItem
             icon={<ArrowRightOnRectangleIcon className="w-6 h-6" />}
             title="Logout"

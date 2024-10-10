@@ -1,12 +1,13 @@
-const Product = require("../models/product");
-const APIFeatures = require("../utils/api-features");
-const {
+// prodController.js
+import Product from "../models/product.js";
+import APIFeatures from "../utils/api-features.js";
+import {
   uploadImage,
   deleteImage,
   checkImageExists,
-} = require("../utils/cloudinary"); // Remove getCloudinaryPublicId if it's not used
+} from "../utils/cloudinary.js";
 
-exports.getProducts = async (req, res) => {
+export const getProducts = async (req, res) => {
   try {
     const features = new APIFeatures(Product.find(), req.query)
       .search()
@@ -25,7 +26,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-exports.getOneProduct = async (req, res) => {
+export const getOneProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -39,7 +40,7 @@ exports.getOneProduct = async (req, res) => {
   }
 };
 
-exports.addProduct = async (req, res) => {
+export const addProduct = async (req, res) => {
   try {
     const productData = req.body;
 
@@ -67,7 +68,7 @@ exports.addProduct = async (req, res) => {
   }
 };
 
-exports.updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
   try {
     let updatedData = req.body;
     const existingProduct = await Product.findById(req.params.id);
@@ -110,27 +111,23 @@ exports.updateProduct = async (req, res) => {
     });
   }
 };
-exports.deleteProduct = async (req, res) => {
+
+export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
-    // Check if the product exists
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
 
-    // Check if the product has an image before proceeding with Cloudinary logic
     if (product.imagePublicId) {
       const publicId = product.imagePublicId;
       console.log(`Checking if image with publicId: ${publicId} exists`);
 
       try {
-        // Check if the image exists on Cloudinary
-        await checkImageExists(publicId); // Only check existence
-
-        // If image exists, proceed to delete it
+        await checkImageExists(publicId);
         const result = await deleteImage(publicId);
 
         if (result.result === "ok") {
@@ -148,7 +145,6 @@ exports.deleteProduct = async (req, res) => {
           });
         }
       } catch (error) {
-        // Log the error and continue deleting the product
         console.error("Image not found on Cloudinary:", error.message);
       }
     } else {
@@ -157,7 +153,6 @@ exports.deleteProduct = async (req, res) => {
       );
     }
 
-    // Proceed to delete the product
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
 
     if (!deletedProduct) {
@@ -167,7 +162,6 @@ exports.deleteProduct = async (req, res) => {
       });
     }
 
-    // Log success message for product deletion
     console.log("Product deleted successfully:", deletedProduct._id);
 
     res.status(200).json({

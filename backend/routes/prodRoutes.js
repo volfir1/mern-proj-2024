@@ -1,12 +1,12 @@
-const express = require("express");
-const multer = require("multer");
-const {
+import express from "express";
+import multer from "multer";
+import {
   getProducts,
   getOneProduct,
   addProduct,
   updateProduct,
   deleteProduct,
-} = require("../controllers/prodController");
+} from "../controllers/prodController.js";
 
 const router = express.Router();
 
@@ -31,4 +31,4 @@ router.post("/products", upload.single("image"), addProduct);
 router.put("/prod-change/:id", upload.single("image"), updateProduct);
 router.delete("/prod-delete/:id", deleteProduct);
 
-module.exports = router;
+export default router;

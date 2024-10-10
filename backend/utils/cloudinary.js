@@ -1,4 +1,5 @@
-const cloudinary = require("cloudinary").v2;
+// cloudinary.js
+import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -13,7 +14,7 @@ cloudinary.config({
  * @param {Object} options - Optional Cloudinary options (e.g., folder, public_id).
  * @returns {Promise<Object>} - A promise that resolves with the Cloudinary upload result.
  */
-const uploadImage = (imageBuffer, options = {}) => {
+export const uploadImage = (imageBuffer, options = {}) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       { ...options },
@@ -42,7 +43,7 @@ const uploadImage = (imageBuffer, options = {}) => {
  * @param {string} publicId - The public ID of the image to delete.
  * @returns {Promise<Object>} - A promise that resolves with the Cloudinary deletion result.
  */
-const deleteImage = (publicId) => {
+export const deleteImage = (publicId) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.destroy(publicId, (error, result) => {
       if (error) {
@@ -62,7 +63,7 @@ const deleteImage = (publicId) => {
  * @param {string} imageUrl - The Cloudinary image URL.
  * @returns {string} - The extracted public ID.
  */
-const getCloudinaryPublicId = (imageUrl) => {
+export const getCloudinaryPublicId = (imageUrl) => {
   if (!imageUrl) {
     throw new Error("Image URL is not provided");
   }
@@ -75,7 +76,7 @@ const getCloudinaryPublicId = (imageUrl) => {
   return publicIdFull;
 };
 
-const checkImageExists = (publicId) => {
+export const checkImageExists = (publicId) => {
   return new Promise((resolve, reject) => {
     cloudinary.api.resource(publicId, (error, result) => {
       if (error) {
@@ -89,11 +90,4 @@ const checkImageExists = (publicId) => {
       }
     });
   });
-};
-
-module.exports = {
-  uploadImage,
-  deleteImage,
-  getCloudinaryPublicId,
-  checkImageExists,
 };

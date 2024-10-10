@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline"; // Updated imports
+import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/sidebar/Sidebar";
-import TablePagination from "@mui/material/TablePagination"; // Material-UI pagination
+import TablePagination from "@mui/material/TablePagination";
 import {
   Dialog,
   DialogTitle,
   DialogActions,
   DialogContent,
-} from "@mui/material"; // Modal for confirmation
+  Snackbar,
+  Alert as MuiAlert,
+} from "@mui/material";
+import { useTheme } from "../../components/others/Theme"; // Ensure you have this hook
 
 const Product = () => {
+  const { isDarkMode } = useTheme(); // Get dark mode state from context
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [error, setError] = useState(null);
@@ -25,12 +24,10 @@ const Product = () => {
     message: "",
     severity: "success",
   });
-  const [openDialog, setOpenDialog] = useState(false); // State to open confirmation dialog
-  const [productToDelete, setProductToDelete] = useState(null); // Track product to delete
-
-  const [page, setPage] = useState(0); // Pagination state
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
-
+  const [openDialog, setOpenDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,7 +45,7 @@ const Product = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/prod-list"); // Updated route
+      const response = await fetch("/api/prod-list");
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -71,16 +68,15 @@ const Product = () => {
         throw new Error("Product not found");
       }
 
-      // Get the public ID from the image URL
       const imageUrlParts = product.imageUrl.split("/");
-      const publicIdWithExtension = imageUrlParts.slice(-1)[0]; // Last part of URL
-      const publicId = publicIdWithExtension.split(".")[0]; // Remove the extension
+      const publicIdWithExtension = imageUrlParts.slice(-1)[0];
+      const publicId = publicIdWithExtension.split(".")[0];
 
       const response = await fetch(`/api/prod-delete/${productToDelete}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Public-Id": publicId, // Send the public ID if your backend requires it
+          "Public-Id": publicId,
         },
       });
 
@@ -88,18 +84,17 @@ const Product = () => {
         throw new Error("Failed to delete product");
       }
 
-      // Refetch products after deletion
       await fetchProducts();
       showSnackbar("Product deleted successfully", "success");
-      setOpenDialog(false); // Close confirmation dialog
+      setOpenDialog(false);
     } catch (error) {
       showSnackbar(error.message || "Error deleting product", "error");
     }
   };
 
   const confirmDeleteProduct = (productId) => {
-    setProductToDelete(productId); // Set the product to delete
-    setOpenDialog(true); // Open the confirmation dialog
+    setProductToDelete(productId);
+    setOpenDialog(true);
   };
 
   const handleCreateProduct = () => {
@@ -123,34 +118,47 @@ const Product = () => {
     setSnackbar({ open: true, message, severity });
     setTimeout(() => {
       setSnackbar({ open: false, message: "", severity: "success" });
-    }, 5000); // Auto-hide after 5 seconds
+    }, 5000);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div
+      className={`flex h-screen ${isDarkMode ? "bg-gray-900" : "bg-gray-100"}`}
+    >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden ml-[80px]">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 px-8 py-8">
+        <main
+          className={`flex-1 overflow-x-hidden overflow-y-auto ${
+            isDarkMode ? "bg-gray-800" : "bg-gray-100"
+          } px-8 py-8`}
+        >
           <div className="container mx-auto">
-            <h1 className="text-4xl font-bold text-gray-900 mb-8">Products</h1>
+            <h1
+              className={`text-4xl font-bold ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              } mb-8`}
+            >
+              Products
+            </h1>
 
-            {/* Snackbar for alerts */}
-            {snackbar.open && (
-              <div
-                className={`fixed top-0 left-0 w-full p-4 bg-${
-                  snackbar.severity === "success" ? "green" : "red"
-                }-500 text-white flex justify-between items-center`}
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={4000}
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <MuiAlert
+                elevation={6}
+                variant="filled"
+                severity={snackbar.severity}
               >
-                <span>{snackbar.message}</span>
-                <button
-                  className="ml-4"
-                  onClick={() => setSnackbar({ ...snackbar, open: false })}
-                >
-                  <XMarkIcon className="h-5 w-5 inline-block" />{" "}
-                  {/* Close button */}
-                </button>
-              </div>
-            )}
+                {snackbar.message}
+              </MuiAlert>
+            </Snackbar>
 
             <div className="mb-6 flex justify-between items-center">
               <input
@@ -158,7 +166,11 @@ const Product = () => {
                 placeholder="Search products"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                className={`w-64 px-4 py-2 border ${
+                  isDarkMode
+                    ? "border-gray-700 bg-gray-800 text-white"
+                    : "border-gray-300"
+                } rounded focus:outline-none focus:ring-2 focus:ring-red-500`}
               />
               <button
                 onClick={handleCreateProduct}
@@ -171,7 +183,11 @@ const Product = () => {
 
             {error && (
               <div
-                className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6"
+                className={`border-l-4 p-4 mb-6 ${
+                  isDarkMode
+                    ? "bg-red-800 border-red-600 text-white"
+                    : "bg-red-100 border-red-500 text-red-700"
+                }`}
                 role="alert"
               >
                 <p className="font-bold">Error</p>
@@ -181,43 +197,36 @@ const Product = () => {
 
             <div className="bg-white shadow-md overflow-x-auto rounded-lg">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead
+                  className={`bg-gray-50 ${
+                    isDarkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
+                >
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Product Name
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Category
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Price
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody
+                  className={`bg-white divide-y divide-gray-200 ${
+                    isDarkMode ? "bg-gray-800 text-white" : ""
+                  }`}
+                >
                   {filteredProducts
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) // Slice data for pagination
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((product) => (
                       <tr key={product._id}>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -256,57 +265,57 @@ const Product = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleUpdateProduct(product._id)}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900 mr-2"
                           >
-                            <PencilIcon className="h-5 w-5" />
+                            <PencilIcon className="h-5 w-5 inline" />
                           </button>
                           <button
                             onClick={() => confirmDeleteProduct(product._id)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            <TrashIcon className="h-5 w-5" />
+                            <TrashIcon className="h-5 w-5 inline" />
                           </button>
                         </td>
                       </tr>
                     ))}
                 </tbody>
               </table>
+
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredProducts.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </div>
-
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={filteredProducts.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-
-            {/* Confirmation Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-              <DialogTitle>Confirm Delete</DialogTitle>
-              <DialogContent>
-                Are you sure you want to delete this product?
-              </DialogContent>
-              <DialogActions>
-                <button
-                  onClick={() => setOpenDialog(false)}
-                  className="px-4 py-2 bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteProduct}
-                  className="px-4 py-2 bg-red-500 text-white"
-                >
-                  Delete
-                </button>
-              </DialogActions>
-            </Dialog>
           </div>
         </main>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this product?
+        </DialogContent>
+        <DialogActions>
+          <button
+            onClick={() => setOpenDialog(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDeleteProduct}
+            className="text-red-600 hover:text-red-800"
+          >
+            Delete
+          </button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
