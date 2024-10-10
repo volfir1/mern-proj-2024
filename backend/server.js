@@ -20,9 +20,9 @@ app.use("/api", productRoutes);
 
 // Root route
 app.get("/", (req, res) => {
-    res.send("Goodmorning");
+  res.send("Goodmorning");
 });
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });

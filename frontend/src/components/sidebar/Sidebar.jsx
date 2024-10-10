@@ -1,99 +1,164 @@
-import React, { useRef } from "react";
-import { SidebarData } from "./SidebarData";
-import { useToggleDarkMode, useToggleClose } from "./SidebarScript";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import DarkModeRoundedIcon from "@mui/icons-material/NightsStayRounded"; // Assuming this icon is for dark mode
-import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
-import "./sidebar.css";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Squares2X2Icon,
+  DocumentTextIcon,
+  ClockIcon,
+  ArchiveBoxIcon,
+  TruckIcon,
+  UsersIcon,
+  SunIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+
+const SidebarItem = ({ icon, title, link, isOpen }) => {
+  const navigate = useNavigate();
+  return (
+    <li
+      className="group relative flex items-center p-2 mt-2 cursor-pointer transition-all duration-200 hover:bg-red-500 hover:text-white"
+      onClick={() => navigate(link)}
+    >
+      <div className="flex items-center justify-center min-w-[60px] group-hover:text-white">
+        {icon}
+      </div>
+      <span
+        className={`font-light transition-all duration-200 ${
+          isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
+        }`}
+      >
+        {title}
+      </span>
+    </li>
+  );
+};
 
 export default function Sidebar() {
-    const sidebarRef = useRef(null),
-        { isDarkMode, ToggleDarkMode } = useToggleDarkMode(sidebarRef),
-        { isClosed, toggleSidebar } = useToggleClose(sidebarRef);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const sidebarRef = useRef(null);
 
-    return (
-        <div ref={sidebarRef} className="SidebarContainer">
-            <nav className={`sidebar ${isClosed ? "close" : ""}`}>
-                <header>
-                    <div className="img-text">
-                        <span className="sidebar-image">
-                            <img
-                                src="./assets/logos/bake-remove.png"
-                                alt="logo"
-                            />
-                        </span>
+  useEffect(() => {
+    const handleMouseEnter = () => setIsOpen(true);
+    const handleMouseLeave = () => setIsOpen(false);
 
-                        <div className="text header-text">
-                            <span className="name">Lester</span>
-                            <span className="profession">Web Developer</span>
-                        </div>
-                    </div>
+    const sidebar = sidebarRef.current;
+    if (sidebar) {
+      sidebar.addEventListener("mouseenter", handleMouseEnter);
+      sidebar.addEventListener("mouseleave", handleMouseLeave);
+    }
 
-                    <i
-                        className="bx bx-chevron-right toggle"
-                        onClick={toggleSidebar}
-                    ></i>
-                </header>
+    return () => {
+      if (sidebar) {
+        sidebar.removeEventListener("mouseenter", handleMouseEnter);
+        sidebar.removeEventListener("mouseleave", handleMouseLeave);
+      }
+    };
+  }, []);
 
-                <div className="menu-bar">
-                    {/* Main menu items */}
-                    <div className="menu">
-                        <ul className="nav-link">
-                            {SidebarData.map((val, key) => (
-                                <li
-                                    key={key}
-                                    className="row"
-                                    id={
-                                        window.location.pathname === val.link
-                                            ? "active"
-                                            : ""
-                                    }
-                                    onClick={() => {
-                                        window.location.pathname = val.link;
-                                    }}
-                                >
-                                    <div id="icon">{val.icon}</div>
-                                    <div id="title">{val.title}</div>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-                    {/* Bottom items: Logout and Dark Mode */}
-                    <div className="bottom-items">
-                        <li className="row" id="mode" onClick={ToggleDarkMode}>
-                            <div className="moon-sun">
-                                {isDarkMode ? (
-                                    <DarkModeRoundedIcon className="dark-icon" />
-                                ) : (
-                                    <LightModeRoundedIcon className="light-icon" />
-                                )}
-                            </div>
-                            <span id="title" className="mode-text text">
-                                {isDarkMode ? "Dark" : "Light"}
-                            </span>
-
-                            <div className="toggle-switch">
-                                <span className="switch"></span>
-                            </div>
-                        </li>
-
-                        <ul className="nav-link">
-                            <li
-                                className="row"
-                                onClick={() => {
-                                    window.location.pathname = "/logout";
-                                }}
-                            >
-                                <div id="icon">
-                                    <LogoutRoundedIcon />
-                                </div>
-                                <div id="title">Logout</div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+  return (
+    <div
+      ref={sidebarRef}
+      className={`font-helvetica fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 ease-in-out z-50 ${
+        isOpen ? "w-64" : "w-20"
+      }`}
+    >
+      <div className="flex items-center justify-between p-4 overflow-hidden border-b border-gray-200">
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-red-500 text-white rounded-none flex items-center justify-center font-bold flex-shrink-0">
+            L
+          </div>
+          <div
+            className={`transition-all duration-300 ml-3 ${
+              isOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+            }`}
+          >
+            <h2 className="font-light text-gray-800 uppercase tracking-wide">
+              Lester
+            </h2>
+            <p className="text-xs text-gray-600 uppercase">Web Developer</p>
+          </div>
         </div>
-    );
+      </div>
+
+      <nav className="mt-8">
+        <ul className="space-y-2">
+          <SidebarItem
+            icon={<Squares2X2Icon className="w-6 h-6" />}
+            title="Dashboard"
+            link="/dashboard"
+            isOpen={isOpen}
+          />
+          <SidebarItem
+            icon={<DocumentTextIcon className="w-6 h-6" />}
+            title="Products"
+            link="/admin/products"
+            isOpen={isOpen}
+          />
+          <SidebarItem
+            icon={<ClockIcon className="w-6 h-6" />}
+            title="Orders"
+            link="/orders"
+            isOpen={isOpen}
+          />
+          <SidebarItem
+            icon={<ArchiveBoxIcon className="w-6 h-6" />}
+            title="Inventory"
+            link="/inventory"
+            isOpen={isOpen}
+          />
+          <SidebarItem
+            icon={<TruckIcon className="w-6 h-6" />}
+            title="Suppliers"
+            link="/suppliers"
+            isOpen={isOpen}
+          />
+          <SidebarItem
+            icon={<UsersIcon className="w-6 h-6" />}
+            title="Users"
+            link="/users"
+            isOpen={isOpen}
+          />
+        </ul>
+      </nav>
+
+      <div className="absolute bottom-4 left-0 w-full overflow-hidden border-t border-gray-200 pt-4">
+        <ul className="space-y-2">
+          <li className="flex items-center p-2 cursor-pointer">
+            <div className="flex items-center justify-center min-w-[60px] text-gray-700">
+              <SunIcon className="w-6 h-6" />
+            </div>
+            <div
+              className={`flex items-center justify-between flex-grow transition-all duration-300 ${
+                isOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+              }`}
+            >
+              <span className="text-gray-800 whitespace-nowrap font-light">
+                Light Mode
+              </span>
+              <div
+                className={`w-12 h-6 flex items-center bg-gray-300 rounded-none p-1 cursor-pointer ${
+                  isDarkMode ? "bg-gray-600" : ""
+                }`}
+                onClick={toggleDarkMode}
+              >
+                <div
+                  className={`bg-white w-4 h-4 shadow-md transform transition-transform duration-300 ${
+                    isDarkMode ? "translate-x-6" : ""
+                  }`}
+                />
+              </div>
+            </div>
+          </li>
+          <SidebarItem
+            icon={<ArrowRightOnRectangleIcon className="w-6 h-6" />}
+            title="Logout"
+            link="/logout"
+            isOpen={isOpen}
+          />
+        </ul>
+      </div>
+    </div>
+  );
 }

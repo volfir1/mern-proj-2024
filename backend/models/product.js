@@ -1,13 +1,23 @@
-// /models/productModel.js
 const mongoose = require("mongoose");
 
-const productSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    rating: { type: Number, default: 0 },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
     description: { type: String, required: true },
     inStock: { type: Boolean, default: false },
+    stockQuantity: { type: Number, default: 0 },
     category: { type: String, required: true },
+    imageUrl: { type: String },
+    imagePublicId: { type: String }, // New field for Cloudinary public ID
+  },
+  { timestamps: true }
+);
+
+productSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 const Product = mongoose.model("Product", productSchema);

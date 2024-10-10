@@ -1,38 +1,38 @@
 import { useState, useEffect } from "react";
 
 export const useToggleDarkMode = (containerRef) => {
-    const [isDarkMode, setIsDarkmode] = useState(false);
+  const [isDarkMode, setIsDarkmode] = useState(false);
 
-    useEffect(() => {
-        const container = containerRef.current;
+  useEffect(() => {
+    const container = containerRef.current;
 
-        if (container) {
-            document.body.classList.toggle("dark", isDarkMode);
-            document.body.classList.toggle("light", !isDarkMode);
-        }
-    }, [isDarkMode, containerRef]);
+    if (container) {
+      document.body.classList.toggle("dark", isDarkMode);
+      document.body.classList.toggle("light", !isDarkMode);
+    }
+  }, [isDarkMode, containerRef]);
 
-    const ToggleDarkMode = () => {
-        setIsDarkmode((prevMode) => !prevMode);
-    };
+  const ToggleDarkMode = () => {
+    setIsDarkmode((prevMode) => !prevMode);
+  };
 
-    return { isDarkMode, ToggleDarkMode };
+  return { isDarkMode, ToggleDarkMode };
 };
 
 export const useToggleClose = (sidebarRef) => {
-    const [isClosed, setIsClosed] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
 
-    useEffect(() => {
-        const sidebar = sidebarRef.current;
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
 
-        if (sidebar) {
-            sidebar.classList.toggle("close", isClosed);
-        }
-    }, [isClosed, sidebarRef]);
+    if (sidebar) {
+      sidebar.classList.toggle("close", isClosed);
+    }
+  }, [isClosed, sidebarRef]);
 
-    const toggleSidebar = () => {
-        setIsClosed((prevState) => !prevState);
-    };
+  const toggleSidebar = () => {
+    setIsClosed((prevState) => !prevState);
+  };
 
-    return { isClosed, toggleSidebar };
+  return { isClosed, toggleSidebar };
 };
