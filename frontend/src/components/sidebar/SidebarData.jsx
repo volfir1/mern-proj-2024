@@ -5,6 +5,7 @@ import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import LocalShippingRoundedIcon from "@mui/icons-material/LocalShippingRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
+import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded"; // Importing Category icon
 
 export const SidebarData = [
   {
@@ -16,6 +17,11 @@ export const SidebarData = [
     title: "Products",
     icon: <MenuBookRoundedIcon />,
     link: "/admin/products", // Point to the route for products
+  },
+  {
+    title: "Add Category", // New category item
+    icon: <CategoryRoundedIcon />, // Category icon
+    link: "/admin/categories", // Route for adding category
   },
   {
     title: "Orders",

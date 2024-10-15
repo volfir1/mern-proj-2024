@@ -8,7 +8,16 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     inStock: { type: Boolean, default: false },
     stockQuantity: { type: Number, default: 0 },
-    category: { type: String, required: true },
+    category: {
+      type: mongoose.Schema.Types.ObjectId, // Reference to the Category model
+      ref: "Category", // The model to refer to
+      required: true,
+    },
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId, // Reference to the subcategory
+      ref: "Category", // The model to refer to
+      required: true,
+    },
     imageUrl: { type: String },
     imagePublicId: { type: String }, // New field for Cloudinary public ID
   },

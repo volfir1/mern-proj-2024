@@ -1,16 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import { SidebarData } from "./SidebarData"; // Adjust the path to SidebarData
 import {
-  Squares2X2Icon,
-  DocumentTextIcon,
-  ClockIcon,
-  ArchiveBoxIcon,
-  TruckIcon,
-  UsersIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-} from "@heroicons/react/24/outline";
-
+} from "@heroicons/react/24/outline"; // Import necessary icons from Heroicons
+import LoadingFallback from "../ui/loader";
 const SidebarItem = ({ icon, title, link, isOpen }) => {
   const navigate = useNavigate();
   return (
@@ -81,49 +76,26 @@ export default function Sidebar() {
 
       <nav className="mt-8">
         <ul className="space-y-2">
-          <SidebarItem
-            icon={<Squares2X2Icon className="w-6 h-6" />}
-            title="Dashboard"
-            link="/dashboard"
-            isOpen={isOpen}
-          />
-          <SidebarItem
-            icon={<DocumentTextIcon className="w-6 h-6" />}
-            title="Products"
-            link="/admin/products"
-            isOpen={isOpen}
-          />
-          <SidebarItem
-            icon={<ClockIcon className="w-6 h-6" />}
-            title="Orders"
-            link="/orders"
-            isOpen={isOpen}
-          />
-          <SidebarItem
-            icon={<ArchiveBoxIcon className="w-6 h-6" />}
-            title="Inventory"
-            link="/inventory"
-            isOpen={isOpen}
-          />
-          <SidebarItem
-            icon={<TruckIcon className="w-6 h-6" />}
-            title="Suppliers"
-            link="/suppliers"
-            isOpen={isOpen}
-          />
-          <SidebarItem
-            icon={<UsersIcon className="w-6 h-6" />}
-            title="Users"
-            link="/users"
-            isOpen={isOpen}
-          />
+          {SidebarData.map((item, index) => (
+            <li key={item.title || index}>
+              <Suspense fallback={<LoadingFallback />}>
+                <SidebarItem
+                  key={index}
+                  icon={item.icon}
+                  title={item.title}
+                  link={item.link}
+                  isOpen={isOpen}
+                />
+              </Suspense>
+            </li>
+          ))}
         </ul>
       </nav>
 
       <div className="absolute bottom-4 left-0 w-full overflow-hidden border-t border-gray-200 pt-4">
         <ul className="space-y-2">
           <SidebarItem
-            icon={<Cog6ToothIcon className="w-6 h-6" />}
+            icon={<Cog6ToothIcon className="w-6 h-6" />} // Ensure this is correctly imported
             title="Settings"
             link="/admin/settings"
             isOpen={isOpen}
