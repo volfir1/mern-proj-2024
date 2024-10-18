@@ -8,6 +8,7 @@ import connectDatabase from "./config/database.js";
 import productRoutes from "./routes/prodRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subCategoryRoutes.js"; // Import subcategory routes
+import supplierRoutes from "./routes/supplierRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,11 +43,8 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api", productRoutes); // Versioning for future flexibility
 app.use("/api", categoryRoutes);
 app.use("/api", subcategoryRoutes); // Separate subcategories route
+app.use("/api", supplierRoutes);
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Good morning! Server is running.");
-});
 
 // 404 handling for undefined routes
 app.use((req, res) => {

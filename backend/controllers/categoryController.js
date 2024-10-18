@@ -1,8 +1,8 @@
 // controllers/CategoryController.js
 import Category from "../models/category.js";
 
-class CategoryController {
-  static slugify(text) {
+
+  export const slugify = (text)=>{
     return text
       .toString()
       .toLowerCase()
@@ -11,10 +11,10 @@ class CategoryController {
       .replace(/\-\-+/g, "-") // Replace multiple - with single -
       .replace(/^-+/, "") // Trim - from start of text
       .replace(/-+$/, ""); // Trim - from end of text
-  }
+  };
 
   // Create a new category
-  static async createCategory(req, res) {
+export const createCategory = async (req, res) => {
     try {
       const { name, description } = req.body;
 
@@ -50,7 +50,7 @@ class CategoryController {
   }
 
   // Get all categories
-  static async getAllCategories(req, res) {
+ export const getAllCategories =  async (req, res) => {
     try {
       const categories = await Category.find({ parent: null })
         .sort({ level: 1, name: 1 })
@@ -67,7 +67,7 @@ class CategoryController {
   }
 
   // Get category by ID
-  static async getCategoryById(req, res) {
+ export const getCategoryById =  async (req, res) =>{
     try {
       const category = await Category.findById(req.params.id).populate({
         path: "subcategories",
@@ -88,7 +88,7 @@ class CategoryController {
   }
 
   // Update a category
-  static async updateCategory(req, res) {
+ export const updateCategory = async (req, res) => {
     try {
       const { name, description } = req.body;
       const categoryId = req.params.id;
@@ -125,7 +125,7 @@ class CategoryController {
   }
 
   // Delete a category
-  static async deleteCategory(req, res) {
+ export const deleteCategory = async (req, res) => {
     try {
       const categoryId = req.params.id;
 
@@ -161,6 +161,5 @@ class CategoryController {
       });
     }
   }
-}
 
-export default CategoryController;
+
