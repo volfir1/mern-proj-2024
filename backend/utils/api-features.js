@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 class APIFeatures {
   constructor(query, queryStr) {
     this.query = query; // The mongoose query
@@ -43,6 +45,36 @@ class APIFeatures {
     const skip = resPerPage * (currentPage - 1); // Skip for pagination
 
     this.query = this.query.limit(resPerPage).skip(skip); // Limit and skip
+    return this;
+  }
+
+  // Validate query parameters
+  validate() {
+    const errors = [];
+
+    // Validate page number
+    if (this.queryStr.page && isNaN(this.queryStr.page)) {
+      errors.push('Page must be a number');
+    }
+
+    // Validate limit
+    if (this.queryStr.limit && isNaN(this.queryStr.limit)) {
+      errors.push('Limit must be a number');
+    }
+
+    // Validate price range
+    if (this.queryStr.price) {
+      const price = this.queryStr.price;
+      if (price.gt && isNaN(price.gt)) errors.push('Price gt must be a number');
+      if (price.gte && isNaN(price.gte)) errors.push('Price gte must be a number');
+      if (price.lt && isNaN(price.lt)) errors.push('Price lt must be a number');
+      if (price.lte && isNaN(price.lte)) errors.push('Price lte must be a number');
+    }
+
+    if (errors.length > 0) {
+      throw new Error(errors.join(', '));
+    }
+
     return this;
   }
 }

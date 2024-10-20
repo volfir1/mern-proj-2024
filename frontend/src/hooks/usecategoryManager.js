@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchCategories,
   createCategory,
@@ -7,217 +8,333 @@ import {
   createSubcategory,
   updateSubcategory,
   deleteSubcategory,
-} from "../api/categoryApi"; // Adjust the import path as necessary
+  getCategoryById,
+} from "../api/categoryApi";
 
 const useCategoryManager = () => {
-  const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [newSubcategory, setNewSubcategory] = useState("");
-  const [editName, setEditName] = useState("");
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [open, setOpen] = useState(false);
-  const [openAddCategory, setOpenAddCategory] = useState(false);
-  const [openAddSubcategory, setOpenAddSubcategory] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [currentSubcategory, setCurrentSubcategory] = useState(null);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteType, setDeleteType] = useState("");
-  const [subCategory, setSubCategories] = useState("");
+  const queryClient = useQueryClient();
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    openAddCategory: false,
+    openAddSubcategory: false,
+    openDeleteDialog: false,
+    editName: "",
+    newCategory: "",
+    newSubcategory: "",
+    currentCategory: null,
+    currentSubcategory: null,
+    deleteId: null,
+    deleteType: "",
+  });
 
-  const loadCategories = async () => {
-    try {
-      const fetchedCategories = await fetchCategories();
-      setCategories(fetchedCategories);
-    } catch (err) {
-      setError(err.message);
-    }
+  const handleSnackbarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  const handleSaveNewCategory = async () => {
-    if (!newCategory.trim()) {
-      setError("Category name cannot be empty");
-      return;
-    }
-    try {
-      await createCategory({ name: newCategory });
-      await loadCategories();
-      setNewCategory("");
-      setOpenAddCategory(false);
-      setSuccess("Category created successfully");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleUpdateCategory = async () => {
-    if (!editName.trim()) {
-      setError("Category name cannot be empty");
-      return;
-    }
-    try {
-      await updateCategory(currentCategory._id, { name: editName });
-      await loadCategories();
-      setOpen(false);
-      setSuccess("Category updated successfully");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleDeleteCategory = (categoryId) => {
-    setOpenDeleteDialog(true);
-    setDeleteId(categoryId);
-    setDeleteType("category");
-  };
-
-  const handleAddCategory = () => {
-    setNewCategory("");
-    setOpenAddCategory(true);
-  };
-
-  const handleAddSubcategory = (categoryId) => {
-    setCurrentCategory(categoryId);
-    setNewSubcategory("");
-    setOpenAddSubcategory(true);
-  };
-
-  const handleSaveNewSubcategory = async () => {
-    if (!newSubcategory.trim()) {
-      setError("Subcategory name cannot be empty");
-      return;
-    }
-    try {
-      await createSubcategory(currentCategory, { name: newSubcategory });
-      await loadCategories();
-      setNewSubcategory("");
-      setOpenAddSubcategory(false);
-      setSuccess("Subcategory created successfully");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleUpdateSubcategory = async () => {
-    if (!editName.trim()) {
-      setError("Subcategory name cannot be empty");
-      return;
-    }
-    try {
-      await updateSubcategory(currentSubcategory._id, { name: editName });
-      await loadCategories();
-      setOpen(false);
-      setSuccess("Subcategory updated successfully");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleDeleteSubcategory = (subcategoryId) => {
-    setOpenDeleteDialog(true);
-    setDeleteId(subcategoryId);
-    setDeleteType("subcategory");
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      if (deleteType === "category") {
-        await deleteCategory(deleteId);
-      } else {
-        await deleteSubcategory(deleteId);
+  const { data: categories = [], error: fetchError, isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      try {
+        const response = await fetchCategories();
+        return response.categories;
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: error.message,
+          severity: 'error'
+        });
+        throw error;
       }
-      await loadCategories();
-      setOpenDeleteDialog(false);
-      setSuccess(`${deleteType} deleted successfully`);
-    } catch (err) {
-      setError(err.message);
     }
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Category created successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }) => updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Category updated successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Category deleted successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const createSubcategoryMutation = useMutation({
+    mutationFn: ({ categoryId, subcategories }) => createSubcategory(categoryId, subcategories),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Subcategory created successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const updateSubcategoryMutation = useMutation({
+    mutationFn: ({ categoryId, subcategoryId, data }) => 
+      updateSubcategory(categoryId, subcategoryId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Subcategory updated successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const deleteSubcategoryMutation = useMutation({
+    mutationFn: ({ categoryId, subcategoryId }) => 
+      deleteSubcategory(categoryId, subcategoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      handleClose();
+      setSnackbar({
+        open: true,
+        message: 'Subcategory deleted successfully',
+        severity: 'success'
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: 'error'
+      });
+    }
+  });
+
+  const handleClose = () => {
+    setDialogState({
+      open: false,
+      openAddCategory: false,
+      openAddSubcategory: false,
+      openDeleteDialog: false,
+      editName: "",
+      newCategory: "",
+      newSubcategory: "",
+      currentCategory: null,
+      currentSubcategory: null,
+      deleteId: null,
+      deleteType: "",
+    });
   };
 
   const handleOpen = (category = null, subcategory = null) => {
-    if (category) {
-      setCurrentCategory(category);
-      setEditName(category.name);
-    } else if (subcategory) {
-      setCurrentSubcategory(subcategory);
-      setEditName(subcategory.name);
+    setDialogState(prev => ({
+      ...prev,
+      open: true,
+      currentCategory: category,
+      currentSubcategory: subcategory,
+      editName: category?.name || subcategory?.name || "",
+    }));
+  };
+
+  const handleSaveNewCategory = () => {
+    if (!dialogState.newCategory.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Category name cannot be empty',
+        severity: 'error'
+      });
+      return;
     }
-    setOpen(true);
+    createCategoryMutation.mutate({ name: dialogState.newCategory });
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setOpenAddCategory(false);
-    setOpenAddSubcategory(false);
-    setOpenDeleteDialog(false);
-    setEditName("");
-    setNewCategory("");
-    setNewSubcategory("");
-    setCurrentCategory(null);
-    setCurrentSubcategory(null);
+  const handleUpdateCategory = () => {
+    if (!dialogState.editName.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Category name cannot be empty',
+        severity: 'error'
+      });
+      return;
+    }
+    updateCategoryMutation.mutate({
+      id: dialogState.currentCategory._id,
+      data: { name: dialogState.editName }
+    });
   };
 
-  const handleCloseSnackbar = () => {
-    setError(null);
-    setSuccess(null);
-  };
-
-  const getSubCategoryName = (categories, subCategoryId) => {
-    if (!Array.isArray(categories)) {
-      console.warn("Categories is not an array:", categories);
-      return "Unknown";
+  const handleSaveNewSubcategory = () => {
+    if (!dialogState.newSubcategory.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Subcategory name cannot be empty',
+        severity: 'error'
+      });
+      return;
     }
 
-    const subCategory = categories
-      .flatMap((cat) => cat.subcategories || [])
-      .find((sub) => sub && sub._id === subCategoryId);
-    return subCategory ? subCategory.name : "Unknown";
+    const categoryId = dialogState.currentCategory?._id;
+    if (!categoryId) {
+      setSnackbar({
+        open: true,
+        message: 'No category selected',
+        severity: 'error'
+      });
+      return;
+    }
+
+    createSubcategoryMutation.mutate({
+      categoryId,
+      subcategories: [{ name: dialogState.newSubcategory }]
+    });
   };
 
-  return {
-    categories,
-    getSubCategoryName,
-    // ... other returned values
+  const handleSaveEditSubcategory = () => {
+    if (!dialogState.editName.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Subcategory name cannot be empty',
+        severity: 'error'
+      });
+      return;
+    }
+
+    const categoryId = dialogState.currentCategory?._id;
+    const subcategoryId = dialogState.currentSubcategory?._id;
+
+    if (!categoryId || !subcategoryId) {
+      setSnackbar({
+        open: true,
+        message: 'No category or subcategory selected',
+        severity: 'error'
+      });
+      return;
+    }
+
+    updateSubcategoryMutation.mutate({
+      categoryId,
+      subcategoryId,
+      data: { name: dialogState.editName }
+    });
   };
 
-  return {
-    categories,
-    newCategory,
-    newSubcategory,
-    error,
-    success,
-    open,
-    openAddCategory,
-    openAddSubcategory,
-    currentCategory,
-    currentSubcategory,
-    editName,
-    openDeleteDialog,
-    subCategory,
-    setNewCategory,
-    setNewSubcategory,
-    setEditName,
-    handleSaveNewCategory,
-    handleUpdateCategory,
-    handleDeleteCategory,
-    handleAddSubcategory,
-    handleSaveNewSubcategory,
-    handleUpdateSubcategory,
-    handleDeleteSubcategory,
-    handleConfirmDelete,
-    handleOpen,
-    handleClose,
-    handleCloseSnackbar,
-    handleAddCategory,
-    loadCategories,
-    getSubCategoryName,
-    setSubCategories,
-  };
+  // useCategoryManager.js
+// ... (previous imports and code remain the same until handleSaveEditSubcategory)
+
+const handleConfirmDelete = () => {
+  if (dialogState.deleteType === 'category') {
+    deleteCategoryMutation.mutate(dialogState.deleteId);
+  } else if (dialogState.deleteType === 'subcategory') {
+    const categoryId = dialogState.currentCategory?._id;
+    if (!categoryId) {
+      setSnackbar({
+        open: true,
+        message: 'Category not found for deletion',
+        severity: 'error'
+      });
+      return;
+    }
+    deleteSubcategoryMutation.mutate({
+      categoryId,
+      subcategoryId: dialogState.deleteId
+    });
+  }
+};
+
+return {
+  categories,
+  dialogState,
+  loading: isLoading || 
+           createCategoryMutation.isPending || 
+           updateCategoryMutation.isPending || 
+           deleteCategoryMutation.isPending ||
+           createSubcategoryMutation.isPending ||
+           updateSubcategoryMutation.isPending ||
+           deleteSubcategoryMutation.isPending,
+  error: fetchError,
+  snackbar,
+  handleSnackbarClose,
+  setDialogState,
+  handleClose,
+  handleOpen,
+  handleSaveNewCategory,
+  handleUpdateCategory,
+  handleSaveNewSubcategory,
+  handleSaveEditSubcategory,
+  handleConfirmDelete,
+  createCategoryMutation,
+  updateCategoryMutation,
+  deleteCategoryMutation,
+  createSubcategoryMutation,
+  updateSubcategoryMutation,
+  deleteSubcategoryMutation
+};
 };
 
 export default useCategoryManager;

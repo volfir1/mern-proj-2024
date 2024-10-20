@@ -9,6 +9,7 @@ import productRoutes from "./routes/prodRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subCategoryRoutes.js"; // Import subcategory routes
 import supplierRoutes from "./routes/supplierRoutes.js";
+import bodyParser from 'body-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,6 +19,8 @@ dotenv.config({ path: `${__dirname}/.env` });
 
 const app = express();
 const port = process.env.PORT || 3000;
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Connect to MongoDB with error handling
 connectDatabase()
@@ -39,10 +42,10 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Routes
+// Routes 
 app.use("/api", productRoutes); // Versioning for future flexibility
-app.use("/api", categoryRoutes);
-app.use("/api", subcategoryRoutes); // Separate subcategories route
+app.use("/api/categories", categoryRoutes);
+app.use("/api/categories", subcategoryRoutes); // Separate subcategories route
 app.use("/api", supplierRoutes);
 
 

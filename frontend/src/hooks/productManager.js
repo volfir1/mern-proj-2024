@@ -1,11 +1,15 @@
+// hooks/productManager.js
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   fetchProducts,
   fetchCategories,
   deleteProduct,
+  createProduct,
+  updateProduct
 } from "../api/productApi";
 
+// Utility Functions
 export const getCategoryName = (categories, categoryId) => {
   const category = categories.find((cat) => cat._id === categoryId);
   return category ? category.name : "Unknown";
@@ -27,6 +31,7 @@ export const getPublicIdFromImageUrl = (imageUrl) => {
   return publicIdWithExtension.split(".")[0];
 };
 
+// Custom Hook for Product Management
 export const useProductManager = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -48,6 +53,7 @@ export const useProductManager = () => {
     setFilteredProducts(filterProducts(products, categories, searchTerm));
   }, [products, categories, searchTerm]);
 
+  // Data Loading Functions
   const loadProducts = async () => {
     try {
       const data = await fetchProducts();
@@ -75,6 +81,7 @@ export const useProductManager = () => {
     }
   };
 
+  // Product Management Functions
   const handleDeleteProduct = async () => {
     try {
       const product = products.find((p) => p._id === productToDelete);
@@ -83,7 +90,6 @@ export const useProductManager = () => {
       }
 
       const publicId = getPublicIdFromImageUrl(product.imageUrl);
-
       await deleteProduct(productToDelete, publicId);
       await loadProducts();
       showSnackbar("Product deleted successfully", "success");
@@ -118,6 +124,7 @@ export const useProductManager = () => {
     }
   };
 
+  // Pagination Handlers
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -127,6 +134,7 @@ export const useProductManager = () => {
     setPage(0);
   };
 
+  // UI State Management
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -135,6 +143,7 @@ export const useProductManager = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  // Navigation Functions
   const navigateToCreateProduct = () => {
     navigate("/admin/create-product");
   };
@@ -144,6 +153,7 @@ export const useProductManager = () => {
   };
 
   return {
+    // State
     products,
     categories,
     filteredProducts,
@@ -154,19 +164,31 @@ export const useProductManager = () => {
     productToDelete,
     page,
     rowsPerPage,
+
+    // Data Loading
     loadProducts,
     loadCategories,
+
+    // Product Management
     handleDeleteProduct,
     confirmDeleteProduct,
     handleCreateProduct,
     handleUpdateProduct,
+
+    // Pagination
     handleChangePage,
     handleChangeRowsPerPage,
+
+    // UI State Management
     showSnackbar,
     handleCloseSnackbar,
     setSearchTerm,
     setOpenDialog,
+
+    // Navigation
     navigateToCreateProduct,
     navigateToUpdateProduct,
   };
 };
+
+export default useProductManager;

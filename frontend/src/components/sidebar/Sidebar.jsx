@@ -6,10 +6,11 @@ import {
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline"; // Import necessary icons from Heroicons
 import LoadingFallback from "../ui/loader";
+
 const SidebarItem = ({ icon, title, link, isOpen }) => {
   const navigate = useNavigate();
   return (
-    <li
+    <div
       className="group relative flex items-center p-2 mt-2 cursor-pointer transition-all duration-200 hover:bg-red-500 hover:text-white"
       onClick={() => navigate(link)}
     >
@@ -23,7 +24,7 @@ const SidebarItem = ({ icon, title, link, isOpen }) => {
       >
         {title}
       </span>
-    </li>
+    </div>
   );
 };
 
@@ -77,17 +78,14 @@ export default function Sidebar() {
       <nav className="mt-8">
         <ul className="space-y-2">
           {SidebarData.map((item, index) => (
-            <li key={item.title || index}>
-              <Suspense fallback={<LoadingFallback />}>
-                <SidebarItem
-                  key={index}
-                  icon={item.icon}
-                  title={item.title}
-                  link={item.link}
-                  isOpen={isOpen}
-                />
-              </Suspense>
-            </li>
+            <Suspense fallback={<LoadingFallback />} key={item.title || index}>
+              <SidebarItem
+                icon={item.icon}
+                title={item.title}
+                link={item.link}
+                isOpen={isOpen}
+              />
+            </Suspense>
           ))}
         </ul>
       </nav>
@@ -95,7 +93,7 @@ export default function Sidebar() {
       <div className="absolute bottom-4 left-0 w-full overflow-hidden border-t border-gray-200 pt-4">
         <ul className="space-y-2">
           <SidebarItem
-            icon={<Cog6ToothIcon className="w-6 h-6" />} // Ensure this is correctly imported
+            icon={<Cog6ToothIcon className="w-6 h-6" />}
             title="Settings"
             link="/admin/settings"
             isOpen={isOpen}

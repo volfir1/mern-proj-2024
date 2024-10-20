@@ -1,7 +1,7 @@
 const API_BASE_URL = "/api";
 
 export const fetchProducts = async () => {
-  const response = await fetch(`${API_BASE_URL}/prod-list`);
+  const response = await fetch(`${API_BASE_URL}/products`);
   if (!response.ok) {
     throw new Error("Network response was not ok");
   }
@@ -9,7 +9,7 @@ export const fetchProducts = async () => {
 };
 
 export const fetchCategories = async () => {
-  const response = await fetch(`${API_BASE_URL}/category-list`);
+  const response = await fetch(`${API_BASE_URL}/categories`);
   if (!response.ok) {
     throw new Error("Network response was not ok");
   }
@@ -17,7 +17,7 @@ export const fetchCategories = async () => {
 };
 
 export const createProduct = async (productData) => {
-  const response = await fetch(`${API_BASE_URL}/prod-create`, {
+  const response = await fetch(`${API_BASE_URL}/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export const createProduct = async (productData) => {
 };
 
 export const updateProduct = async (productId, productData) => {
-  const response = await fetch(`${API_BASE_URL}/prod-update/${productId}`, {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
