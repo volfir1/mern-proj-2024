@@ -17,7 +17,7 @@ const __dirname = dirname(__filename);
 // Load environment variables
 dotenv.config({ path: `${__dirname}/.env` });
 
-const app = express();
+const app = express();  // Export this instance
 const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -48,7 +48,6 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/categories", subcategoryRoutes); // Separate subcategories route
 app.use("/api", supplierRoutes);
 
-
 // 404 handling for undefined routes
 app.use((req, res) => {
   res.status(404).json({
@@ -75,3 +74,6 @@ app.listen(port, () => {
     } mode`
   );
 });
+
+// Export the app for route listing
+export default app;

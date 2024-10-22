@@ -123,6 +123,8 @@ export const updateSubcategory = async (req, res) => {
   }
 };
 
+
+
 // Function to delete a subcategory
 export const deleteSubcategory = async (req, res) => {
   try {
@@ -188,6 +190,53 @@ export const getSubcategoriesByCategory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed fetching subcategories",
+      error: error.message,
+    });
+  }
+};
+
+
+// Function to get subcategory of a product
+export const getSubcategoryOfProduct = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+
+    const product = await Product.findById(productId).populate({
+      path: "subcategory",
+      select: "name description slug level",
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    const subcategory = product.subcategory;
+
+    if (!subcategory) {
+      return res.status(404).json({
+        success: false,
+        message: "Subcategory not found for this product",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      subcategory: {
+        id: subcategory._id,
+        name: subcategory.name,
+        description: subcategory.description,
+        slug: subcategory.slug,
+        level: subcategory.level,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching subcategory of product:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed fetching subcategory of product",
       error: error.message,
     });
   }

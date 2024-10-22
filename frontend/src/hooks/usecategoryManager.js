@@ -33,9 +33,7 @@ const useCategoryManager = () => {
     deleteType: "",
   });
 
-  const handleSnackbarClose = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
+  const [subCategories, setSubCategories] = useState([]);
 
   const { data: categories = [], error: fetchError, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -44,56 +42,57 @@ const useCategoryManager = () => {
         const response = await fetchCategories();
         return response.categories;
       } catch (error) {
-        setSnackbar({
-          open: true,
-          message: error.message,
-          severity: 'error'
-        });
+        handleSnackbar(error.message, 'error');
         throw error;
       }
     }
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: createCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
-      handleClose();
-      setSnackbar({
-        open: true,
-        message: 'Category created successfully',
-        severity: 'success'
-      });
-    },
-    onError: (error) => {
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: 'error'
-      });
-    }
-  });
+  const handleSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
 
-  const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }) => updateCategory(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
-      handleClose();
-      setSnackbar({
-        open: true,
-        message: 'Category updated successfully',
-        severity: 'success'
-      });
-    },
-    onError: (error) => {
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: 'error'
-      });
+  const loadSubcategoriesByCategory = async (categoryId) => {
+    try {
+      const category = await getCategoryById(categoryId);
+      setSubCategories(category.subcategories || []);
+      return category.subcategories || [];
+    } catch (error) {
+      handleSnackbar(`Error loading subcategories: ${error.message}`, 'error');
+      return [];
     }
-  });
+  };
 
+  const handleSnackbarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const getSubCategoryName = (subCategoryId) => {
+    const subCategory = subCategories.find(sub => sub._id === subCategoryId);
+    return subCategory ? subCategory.name : 'N/A';
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(cat => cat._id === categoryId);
+    return category ? category.name : 'N/A';
+  };
+
+  const createMutation = (mutationFn, successMessage) => {
+    return useMutation({
+      mutationFn,
+      onSuccess: () => {
+        queryClient.invalidateQueries(['categories']);
+        handleClose();
+        handleSnackbar(successMessage);
+      },
+      onError: (error) => {
+        handleSnackbar(error.message, 'error');
+      }
+    });
+  };
+
+  const createCategoryMutation = createMutation(createCategory, 'Category created successfully');
+  const updateCategoryMutation = createMutation(({ id, data }) => updateCategory(id, data), 'Category updated successfully');
   const deleteCategoryMutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
@@ -113,6 +112,8 @@ const useCategoryManager = () => {
       });
     }
   });
+
+  
 
   const createSubcategoryMutation = useMutation({
     mutationFn: ({ categoryId, subcategories }) => createSubcategory(categoryId, subcategories),
@@ -176,6 +177,7 @@ const useCategoryManager = () => {
     }
   });
 
+  // Dialog handlers
   const handleClose = () => {
     setDialogState({
       open: false,
@@ -202,6 +204,7 @@ const useCategoryManager = () => {
     }));
   };
 
+  // Save handlers
   const handleSaveNewCategory = () => {
     if (!dialogState.newCategory.trim()) {
       setSnackbar({
@@ -284,57 +287,58 @@ const useCategoryManager = () => {
     });
   };
 
-  // useCategoryManager.js
-// ... (previous imports and code remain the same until handleSaveEditSubcategory)
-
-const handleConfirmDelete = () => {
-  if (dialogState.deleteType === 'category') {
-    deleteCategoryMutation.mutate(dialogState.deleteId);
-  } else if (dialogState.deleteType === 'subcategory') {
-    const categoryId = dialogState.currentCategory?._id;
-    if (!categoryId) {
-      setSnackbar({
-        open: true,
-        message: 'Category not found for deletion',
-        severity: 'error'
+  const handleConfirmDelete = () => {
+    if (dialogState.deleteType === 'category') {
+      deleteCategoryMutation.mutate(dialogState.deleteId);
+    } else if (dialogState.deleteType === 'subcategory') {
+      const categoryId = dialogState.currentCategory?._id;
+      if (!categoryId) {
+        setSnackbar({
+          open: true,
+          message: 'Category not found for deletion',
+          severity: 'error'
+        });
+        return;
+      }
+      deleteSubcategoryMutation.mutate({
+        categoryId,
+        subcategoryId: dialogState.deleteId
       });
-      return;
     }
-    deleteSubcategoryMutation.mutate({
-      categoryId,
-      subcategoryId: dialogState.deleteId
-    });
-  }
-};
+  };
 
-return {
-  categories,
-  dialogState,
-  loading: isLoading || 
-           createCategoryMutation.isPending || 
-           updateCategoryMutation.isPending || 
-           deleteCategoryMutation.isPending ||
-           createSubcategoryMutation.isPending ||
-           updateSubcategoryMutation.isPending ||
-           deleteSubcategoryMutation.isPending,
-  error: fetchError,
-  snackbar,
-  handleSnackbarClose,
-  setDialogState,
-  handleClose,
-  handleOpen,
-  handleSaveNewCategory,
-  handleUpdateCategory,
-  handleSaveNewSubcategory,
-  handleSaveEditSubcategory,
-  handleConfirmDelete,
-  createCategoryMutation,
-  updateCategoryMutation,
-  deleteCategoryMutation,
-  createSubcategoryMutation,
-  updateSubcategoryMutation,
-  deleteSubcategoryMutation
-};
+  return {
+    categories,
+    subCategories,
+    dialogState,
+    loading: isLoading || 
+             createCategoryMutation.isPending || 
+             updateCategoryMutation.isPending || 
+             deleteCategoryMutation.isPending ||
+             createSubcategoryMutation.isPending ||
+             updateSubcategoryMutation.isPending ||
+             deleteSubcategoryMutation.isPending,
+    error: fetchError,
+    snackbar,
+    handleSnackbarClose,
+    setDialogState,
+    handleClose,
+    handleOpen,
+    handleSaveNewCategory,
+    handleUpdateCategory,
+    handleSaveNewSubcategory,
+    handleSaveEditSubcategory,
+    handleConfirmDelete,
+    getSubCategoryName,
+    getCategoryName,
+    createCategoryMutation,
+    updateCategoryMutation,
+    deleteCategoryMutation,
+    createSubcategoryMutation,
+    updateSubcategoryMutation,
+    deleteSubcategoryMutation,
+    loadSubcategoriesByCategory,
+  };
 };
 
 export default useCategoryManager;

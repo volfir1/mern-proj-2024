@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axiosInstance from '../utils/api'; // Adjust the path accordingly
 
 const handleResponse = (response) => {
   if (response.status >= 400) {
@@ -7,101 +7,96 @@ const handleResponse = (response) => {
   return response.data;
 };
 
+const handleError = (error, action) => {
+  throw new Error(`Failed to ${action}: ${error.message}`);
+};
+
+const jsonHeaders = {
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
+
 // Category API calls
 export const fetchCategories = async () => {
   try {
-    const response = await axios.get('/api/categories');
+    const response = await axiosInstance.get('/categories');
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to fetch categories: ${error.message}`);
+    handleError(error, 'fetch categories');
   }
 };
 
+
 export const getCategoryById = async (id) => {
   try {
-    const response = await axios.get(`/api/categories/${id}`);
+    const response = await axiosInstance.get(`/categories/${id}`);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to fetch category by ID: ${error.message}`);
+    handleError(error, 'fetch category by ID');
   }
 };
 
 export const createCategory = async (category) => {
   try {
-    const response = await axios.post('/api/categories', category, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axiosInstance.post('/categories', category, jsonHeaders);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to create category: ${error.message}`);
+    handleError(error, 'create category');
   }
 };
 
 export const updateCategory = async (id, category) => {
   try {
-    const response = await axios.put(`/api/categories/${id}`, category, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axiosInstance.put(`/categories/${id}`, category, jsonHeaders);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to update category: ${error.message}`);
+    handleError(error, 'update category');
   }
 };
 
 export const deleteCategory = async (id) => {
   try {
-    const response = await axios.delete(`/api/categories/${id}`);
+    const response = await axiosInstance.delete(`/categories/${id}`);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to delete category: ${error.message}`);
+    handleError(error, 'delete category');
   }
 };
 
 // Subcategory API calls
 export const createSubcategory = async (categoryId, subcategories) => {
   try {
-    const response = await axios.post(`/api/categories/${categoryId}/subcategories`, { subcategories }, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axiosInstance.post(`/categories/${categoryId}/subcategories`, { subcategories }, jsonHeaders);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to create subcategory: ${error.message}`);
+    handleError(error, 'create subcategory');
   }
 };
 
 export const updateSubcategory = async (categoryId, subcategoryId, subcategory) => {
   try {
-    const response = await axios.put(`/api/categories/${categoryId}/subcategory/${subcategoryId}`, subcategory, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axiosInstance.put(`/categories/${categoryId}/subcategory/${subcategoryId}`, subcategory, jsonHeaders);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to update subcategory: ${error.message}`);
+    handleError(error, 'update subcategory');
   }
 };
 
 export const deleteSubcategory = async (categoryId, subcategoryId) => {
   try {
-    const response = await axios.delete(`/api/categories/${categoryId}/subcategory/${subcategoryId}`);
+    const response = await axiosInstance.delete(`/categories/${categoryId}/subcategory/${subcategoryId}`);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to delete subcategory: ${error.message}`);
+    handleError(error, 'delete subcategory');
   }
 };
 
 export const getSubcategoriesByCategory = async (categoryId) => {
   try {
-    const response = await axios.get(`/api/categories/${categoryId}/subcategories`);
+    const response = await axiosInstance.get(`/categories/${categoryId}/subcategories`);
     return handleResponse(response);
   } catch (error) {
-    throw new Error(`Failed to fetch subcategories by category: ${error.message}`);
+    handleError(error, 'fetch subcategories by category');
   }
 };

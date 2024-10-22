@@ -1,59 +1,108 @@
-const API_BASE_URL = "/api";
+import axiosInstance from '../utils/api'; // Adjust the path accordingly
 
-export const fetchProducts = async () => {
-  const response = await fetch(`${API_BASE_URL}/products`);
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
+// Helper function for handling response
+const handleResponse = (response) => {
+  if (response.status >= 400) {
+    throw new Error(`Failed to fetch data: ${response.statusText}. ${response.data}`);
   }
-  return response.json();
+  return response.data;
+};
+
+// Product API calls
+export const fetchProducts = async () => {
+  try {
+    const response = await axiosInstance.get('/products', { timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to fetch products: ${error.message}`);
+  }
 };
 
 export const fetchCategories = async () => {
-  const response = await fetch(`${API_BASE_URL}/categories`);
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
+  try {
+    const response = await axiosInstance.get('/categories', { timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to fetch categories: ${error.message}`);
   }
-  return response.json();
+};
+
+export const fetchSubcategoriesByCategory = async (categoryId) => {
+  try {
+    const response = await axiosInstance.get(`/categories/${categoryId}/subcategories`, { timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to fetch subcategories: ${error.message}`);
+  }
 };
 
 export const createProduct = async (productData) => {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(productData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to create product");
+  try {
+    const isFormData = productData instanceof FormData;
+    const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+    const response = await axiosInstance.post('/products', productData, { headers, timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to create product: ${error.message}`);
   }
-  return response.json();
 };
 
 export const updateProduct = async (productId, productData) => {
-  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(productData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update product");
+  try {
+    if (!productId) throw new Error('Product ID is required');
+    const isFormData = productData instanceof FormData;
+    const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+    const response = await axiosInstance.put(`/products/${productId}`, productData, { headers, timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to update product: ${error.message}`);
   }
-  return response.json();
 };
 
 export const deleteProduct = async (productId, publicId) => {
-  const response = await fetch(`${API_BASE_URL}/prod-delete/${productId}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      "Public-Id": publicId,
-    },
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete product");
+  try {
+    if (!productId) throw new Error('Product ID is required');
+    const headers = publicId ? { 'Content-Type': 'application/json', 'Public-Id': publicId } : { 'Content-Type': 'application/json' };
+    const response = await axiosInstance.delete(`/products/${productId}`, { headers, timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to delete product: ${error.message}`);
   }
-  return response.json();
+};
+
+// Validate file before upload
+export const validateFile = (file, options = {}) => {
+  const {
+    maxSize = 5 * 1024 * 1024, // 5MB default
+    allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'],
+  } = options;
+
+  if (!file) {
+    throw new Error('No file provided');
+  }
+
+  if (file.size > maxSize) {
+    throw new Error(`File size must be less than ${maxSize / (1024 * 1024)}MB`);
+  }
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`File type must be one of: ${allowedTypes.join(', ')}`);
+  }
+
+  return true;
+};
+
+// Upload product image
+export const uploadProductImage = async (imageFile) => {
+  try {
+    validateFile(imageFile);
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await axiosInstance.post('/upload', formData, { timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to upload image: ${error.message}`);
+  }
 };

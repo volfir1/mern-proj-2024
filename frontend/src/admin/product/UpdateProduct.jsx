@@ -1,70 +1,277 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Container, Typography, Box } from '@mui/material';
-import { styled } from '@mui/system';
-import ProductForm from './ProductForm';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  TextField,
+  Button,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
+  Checkbox,
+  FormGroup,
+} from '@mui/material';
+import SnackbarMessage from '../../components/alert/Snackbar';
 import { useProductManager } from '../../hooks/productManager';
 
-const StyledPaper = styled(Box)(({ theme }) => ({
-  backgroundColor: "#f8f9fa",
-  padding: theme.spacing(3),
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  minHeight: "calc(100vh - 48px)",
-  display: "flex",
-  flexDirection: "column",
-}));
-
 const UpdateProduct = () => {
-  const { id } = useParams();
+  const { productId } = useParams();
+  const navigate = useNavigate();
   const {
-    product,
-    setProduct,
-    loading,
+    products,
     categories,
     subcategories,
-    fetchCategories,
-    fetchProduct,
     handleUpdateProduct,
-  } = useProductManager(id);
+    loadProducts,
+    loadCategories,
+    snackbar,
+    handleCloseSnackbar,
+    showSnackbar,
+    formData,
+    setFormData,
+    errors,
+    setErrors,
+    loadingProducts,
+    loadingCategories,
+    imagePreview,
+    setImagePreview,
+    isSubmitting,
+    setIsSubmitting,
+    handleInputChange,
+    handleImageChange,
+    handleCategoryToggle,
+    handleSubcategoryToggle,
+  } = useProductManager();
 
   useEffect(() => {
-    fetchCategories();
-    fetchProduct();
-  }, [id, fetchCategories, fetchProduct]);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const formData = new FormData();
-    Object.entries(product).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        formData.append(key, Array.isArray(value) ? JSON.stringify(value) : value);
+    const fetchData = async () => {
+      try {
+        await loadProducts();
+        await loadCategories();
+        const product = products.find((p) => p._id === productId);
+        if (product) {
+          setFormData({
+            name: product.name || '',
+            price: product.price || '',
+            description: product.description || '',
+            inStock: product.inStock || true,
+            stockQuantity: product.stockQuantity || '',
+            selectedCategories: product.categories || [],
+            selectedSubcategories: product.subcategories || [],
+            imageUrl: product.imageUrl || '',
+          });
+          setImagePreview(product.imageUrl || null);
+        } else {
+          showSnackbar('Product not found', 'error');
+        }
+      } catch (error) {
+        showSnackbar('Error loading product', 'error');
       }
-    });
-    await handleUpdateProduct(id, formData);
+    };
+    fetchData();
+  }, [productId, loadProducts, loadCategories, products, showSnackbar, setFormData, setImagePreview]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await handleUpdateProduct(productId, formData);
+      showSnackbar('Product updated successfully!', 'success');
+      navigate('/admin/products');
+    } catch (error) {
+      showSnackbar('Error updating product', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (loading) {
-    return null;
+  if (loadingProducts || loadingCategories) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <CircularProgress />
+      </div>
+    );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 2 }}>
-      <StyledPaper>
-        <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: "center" }}>
-          Update Product
-        </Typography>
-        <ProductForm
-          product={product}
-          setProduct={setProduct}
-          handleSubmit={handleSubmit}
-          categories={categories}
-          subcategories={subcategories}
-          isLoading={loading}
-          submitButtonText="Update Product"
-        />
-      </StyledPaper>
-    </Container>
+    <>
+      <SnackbarMessage
+        open={snackbar.open}
+        onClose={handleCloseSnackbar}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
+
+      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md max-w-6xl">
+        <h2 className="text-2xl font-bold mb-6 text-center">Update Product</h2>
+        
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column: Inputs and Description */}
+          <div className="space-y-4">
+            <TextField
+              fullWidth
+              label="Product Name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              error={!!errors.name}
+              helperText={errors.name}
+            />
+
+            <TextField
+              fullWidth
+              label="Price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleInputChange}
+              error={!!errors.price}
+              helperText={errors.price}
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.inStock}
+                  onChange={() =>
+                    setFormData((prev) => ({ ...prev, inStock: !prev.inStock }))
+                  }
+                  color="primary"
+                />
+              }
+              label="In Stock"
+            />
+
+            {formData.inStock && (
+              <TextField
+                fullWidth
+                label="Stock Quantity"
+                name="stockQuantity"
+                type="number"
+                value={formData.stockQuantity}
+                onChange={handleInputChange}
+                error={!!errors.stockQuantity}
+                helperText={errors.stockQuantity}
+              />
+            )}
+
+            <div>
+              <h4 className="font-semibold mb-2">Description</h4>
+              <TextField
+                fullWidth
+                label="Product Description"
+                name="description"
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={handleInputChange}
+                error={!!errors.description}
+                helperText={errors.description}
+                className="mb-4"
+              />
+            </div>
+          </div>
+
+          {/* Right Column: Image Preview and Categories */}
+          <div className="space-y-4">
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => document.getElementById('image-upload').click()}
+            >
+              <div className="w-full h-64 bg-gray-100 flex items-center justify-center border border-dashed border-gray-300 rounded-lg hover:bg-gray-200">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Product Preview"
+                    className="object-cover h-full w-full rounded-lg"
+                  />
+                ) : (
+                  <p className="text-gray-500 group-hover:text-gray-700">Click to upload image</p>
+                )}
+              </div>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              {errors.image && <p className="text-red-500 mt-2">{errors.image}</p>}
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2">Categories</h4>
+              <FormGroup>
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <FormControlLabel
+                      key={category._id}
+                      control={
+                        <Checkbox
+                          checked={formData.selectedCategories.includes(category._id)}
+                          onChange={() => handleCategoryToggle(category._id)}
+                          color="primary"
+                        />
+                      }
+                      label={category.name}
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500">No categories available</p>
+                )}
+              </FormGroup>
+              {errors.categories && (
+                <p className="text-red-500 mt-1">{errors.categories}</p>
+              )}
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2">Subcategories</h4>
+              <FormGroup>
+                {subcategories.length > 0 ? (
+                  subcategories.map((subcategory) => (
+                    <FormControlLabel
+                      key={subcategory._id}
+                      control={
+                        <Checkbox
+                          checked={formData.selectedSubcategories.includes(subcategory._id)}
+                          onChange={() => handleSubcategoryToggle(subcategory._id)}
+                          color="primary"
+                        />
+                      }
+                      label={subcategory.name}
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500">No subcategories available</p>
+                )}
+              </FormGroup>
+            </div>
+          </div>
+
+          {/* Submit and Cancel buttons */}
+          <div className="col-span-2 flex justify-end space-x-4 mt-6">
+            <Button
+              onClick={() => navigate('/admin/products')}
+              variant="outlined"
+              color="secondary"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-600"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isSubmitting || loadingProducts || loadingCategories}
+              startIcon={isSubmitting && <CircularProgress size={20} />}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              {isSubmitting ? 'Updating...' : 'Update Product'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 };
 
