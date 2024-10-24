@@ -11,7 +11,7 @@ export const SidebarData = [
   {
     title: "Dashboard",
     icon: <DashboardRoundedIcon />,
-    link: "/admin/home",
+    link: "/dashboard",
   },
   {
     title: "Products",

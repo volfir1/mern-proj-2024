@@ -1,4 +1,4 @@
-import mongoose from "mongoose"; // Import mongoose
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
@@ -9,28 +9,39 @@ const productSchema = new mongoose.Schema(
     inStock: { type: Boolean, default: false },
     stockQuantity: { type: Number, default: 0 },
     category: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to the Category model
-      ref: "Category", // The model to refer to
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
       required: true,
     },
     subcategory: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to the subcategory
-      ref: "Category", // The model to refer to
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
       required: true,
     },
     imageUrl: { type: String },
-    imagePublicId: { type: String }, // New field for Cloudinary public ID
+    imagePublicId: { type: String },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true }, // Enable virtuals when converting to JSON
+    toObject: { virtuals: true } // Enable virtuals when converting to object
+  }
 );
 
-// Middleware to update the updatedAt field before saving
+// Pre-save middleware
 productSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
+// Create a static method for fetching products with populated fields
+productSchema.statics.findWithCategories = function() {
+  return this.find()
+    .populate("category", "name") // Populate category with name field
+    .populate("subcategory", "name"); // Populate subcategory with name field
+};
+
 // Create the Product model
 const Product = mongoose.model("Product", productSchema);
 
-export default Product; // Export the Product model
+export default Product;

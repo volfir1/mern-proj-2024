@@ -100,3 +100,23 @@ export const getSubcategoriesByCategory = async (categoryId) => {
     handleError(error, 'fetch subcategories by category');
   }
 };
+
+
+export const getCategoryName = async (categoryId, categoriesList) => {
+  try {
+    // If categoriesList is provided, try to find category from the list first
+    if (categoriesList && Array.isArray(categoriesList)) {
+      const category = categoriesList.find(cat => 
+        cat._id?.toString() === categoryId?.toString()
+      );
+      if (category?.name) return category.name;
+    }
+
+    // If category wasn't found in the list or no list was provided, fetch from API
+    const category = await getCategoryById(categoryId);
+    return category?.name || "Unknown";
+  } catch (error) {
+    console.error('Error getting category name:', error);
+    return "Unknown";
+  }
+};

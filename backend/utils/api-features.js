@@ -39,6 +39,13 @@ class APIFeatures {
     return this;
   }
 
+  // Fetch only product names for validation purposes
+  fetchProductNames() {
+    // Return only the 'name' field from the documents
+    this.query = this.query.find({}, { name: 1, _id: 0 });
+    return this;
+  }
+
   // Paginate results
   pagination(resPerPage) {
     const currentPage = Number(this.queryStr.page) || 1; // Current page number

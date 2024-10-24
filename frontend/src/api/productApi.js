@@ -18,6 +18,16 @@ export const fetchProducts = async () => {
   }
 };
 
+export const getOneProduct = async (productId) => {
+  try {
+    if (!productId) throw new Error('Product ID is required');
+    const response = await axiosInstance.get(`/products/${productId}`, { timeout: 10000 }); // 10 seconds timeout
+    return handleResponse(response);
+  } catch (error) {
+    throw new Error(`Failed to fetch product: ${error.message}`);
+  }
+};
+
 export const fetchCategories = async () => {
   try {
     const response = await axiosInstance.get('/categories', { timeout: 10000 }); // 10 seconds timeout

@@ -1,7 +1,7 @@
 // CategoryContent.jsx
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import useCategoryManager from "../../hooks/usecategoryManager";
+import useCategoryManager from "../../hooks/category";
 import {
   Button, TextField, List, ListItem, ListItemText,
   ListItemSecondaryAction, IconButton, Typography,

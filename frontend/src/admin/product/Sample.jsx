@@ -1,323 +1,270 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import Sidebar from "../../components/sidebar/Sidebar";
-import TablePagination from "@mui/material/TablePagination";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Dialog,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
-  Snackbar,
-  Alert as MuiAlert,
-} from "@mui/material";
-import { useTheme } from "../../components/others/Theme"; // Ensure you have this hook
+  TextField,
+  Button,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
+  Checkbox,
+  FormGroup,
+} from '@mui/material';
+import SnackbarMessage from '../../components/alert/Snackbar';
+import useProductManager from '../../hooks/product';
 
-const Product = () => {
-  const { isDarkMode } = useTheme(); // Get dark mode state from context
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [openDialog, setOpenDialog] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const navigate = useNavigate();
+const CreateProductForm = () => {
+  const {
+    formData = {},
+    setFormData, // Added to update form data
+    errors = {},
+    isSubmitting,
+    categories = [],
+    subcategories = [],
+    imagePreview,
+    handleImageChange,
+    handleCategoryToggle,
+    handleSubcategoryToggle,
+    loading,
+    navigate,
+    snackbar,
+    handleCloseSnackbar,
+  } = useProductManager();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  const [localErrors, setLocalErrors] = useState({}); // State for local validation errors
 
-  useEffect(() => {
-    const filtered = products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProducts(filtered);
-  }, [products, searchTerm]);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/prod-list");
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await response.json();
-      if (Array.isArray(data.products)) {
-        setProducts(data.products);
-        setFilteredProducts(data.products);
-      } else {
-        setError("Invalid data format.");
-      }
-    } catch (error) {
-      setError("Error fetching products.");
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Product name is required.';
+    if (!formData.price) newErrors.price = 'Price is required.';
+    if (formData.inStock && !formData.stockQuantity) {
+      newErrors.stockQuantity = 'Stock quantity is required if product is in stock.';
     }
-  };
-
-  const handleDeleteProduct = async () => {
-    try {
-      const product = products.find((p) => p._id === productToDelete);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      const imageUrlParts = product.imageUrl.split("/");
-      const publicIdWithExtension = imageUrlParts.slice(-1)[0];
-      const publicId = publicIdWithExtension.split(".")[0];
-
-      const response = await fetch(`/api/prod-delete/${productToDelete}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Public-Id": publicId,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
-      }
-
-      await fetchProducts();
-      showSnackbar("Product deleted successfully", "success");
-      setOpenDialog(false);
-    } catch (error) {
-      showSnackbar(error.message || "Error deleting product", "error");
+    if (!formData.description) newErrors.description = 'Description is required.';
+    if (!formData.selectedCategories || formData.selectedCategories.length === 0) {
+      newErrors.categories = 'At least one category is required.';
     }
+    if (!formData.selectedSubcategories || formData.selectedSubcategories.length === 0) {
+      newErrors.subcategories = 'At least one subcategory is required.';
+    }
+    setLocalErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
   };
 
-  const confirmDeleteProduct = (productId) => {
-    setProductToDelete(productId);
-    setOpenDialog(true);
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevent default form submission
 
-  const handleCreateProduct = () => {
-    navigate("/admin/create-product");
-  };
+    if (!validateForm()) return; // Validate the form before submission
 
-  const handleUpdateProduct = (productId) => {
-    navigate(`/admin/products/update/${productId}`);
-  };
+    // Call the API to create the product
+    // Replace the following comment with your API call logic
+    console.log('Submitting product data:', formData);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const showSnackbar = (message, severity) => {
-    setSnackbar({ open: true, message, severity });
-    setTimeout(() => {
-      setSnackbar({ open: false, message: "", severity: "success" });
-    }, 5000);
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+   
   };
 
   return (
-    <div
-      className={`flex h-screen ${isDarkMode ? "bg-gray-900" : "bg-gray-100"}`}
-    >
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden ml-[80px]">
-        <main
-          className={`flex-1 overflow-x-hidden overflow-y-auto ${
-            isDarkMode ? "bg-gray-800" : "bg-gray-100"
-          } px-8 py-8`}
-        >
-          <div className="container mx-auto">
-            <h1
-              className={`text-4xl font-bold ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              } mb-8`}
-            >
-              Products
-            </h1>
+    <>
+     <SnackbarMessage
+  open={snackbar.open}
+  onClose={() => dispatch({ type: 'CLOSE_SNACKBAR' })} // Close the Snackbar
+  message={snackbar.message}
+  severity={snackbar.severity}
+/>
 
-            <Snackbar
-              open={snackbar.open}
-              autoHideDuration={4000}
-              onClose={handleCloseSnackbar}
-              anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            >
-              <MuiAlert
-                elevation={6}
-                variant="filled"
-                severity={snackbar.severity}
-              >
-                {snackbar.message}
-              </MuiAlert>
-            </Snackbar>
+      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md max-w-6xl">
+        <h2 className="text-2xl font-bold mb-6 text-center">Create New Product</h2>
 
-            <div className="mb-6 flex justify-between items-center">
-              <input
-                type="text"
-                placeholder="Search products"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-64 px-4 py-2 border ${
-                  isDarkMode
-                    ? "border-gray-700 bg-gray-800 text-white"
-                    : "border-gray-300"
-                } rounded focus:outline-none focus:ring-2 focus:ring-red-500`}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column: Inputs and Description */}
+          <div className="space-y-4">
+            {/* Product Name */}
+            <TextField
+              fullWidth
+              label="Product Name"
+              name="name"
+              value={formData.name || ''}
+              onChange={handleInputChange}
+              error={!!localErrors.name}
+              helperText={localErrors.name}
+            />
+
+            {/* Product Price */}
+            <TextField
+              fullWidth
+              label="Price"
+              name="price"
+              type="number"
+              value={formData.price || ''}
+              onChange={handleInputChange}
+              error={!!localErrors.price}
+              helperText={localErrors.price}
+            />
+
+            {/* In Stock Switch */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={!!formData.inStock}
+                  onChange={() =>
+                    handleInputChange({
+                      target: { name: 'inStock', value: !formData.inStock },
+                    })
+                  }
+                  color="primary"
+                />
+              }
+              label="In Stock"
+            />
+
+            {/* Stock Quantity (only shown if in stock) */}
+            {formData.inStock && (
+              <TextField
+                fullWidth
+                label="Stock Quantity"
+                name="stockQuantity"
+                type="number"
+                value={formData.stockQuantity || ''}
+                onChange={handleInputChange}
+                error={!!localErrors.stockQuantity}
+                helperText={localErrors.stockQuantity}
               />
-              <button
-                onClick={handleCreateProduct}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 focus:outline-none"
-              >
-                <PlusIcon className="h-5 w-5 inline-block mr-2" />
-                Add new product
-              </button>
-            </div>
-
-            {error && (
-              <div
-                className={`border-l-4 p-4 mb-6 ${
-                  isDarkMode
-                    ? "bg-red-800 border-red-600 text-white"
-                    : "bg-red-100 border-red-500 text-red-700"
-                }`}
-                role="alert"
-              >
-                <p className="font-bold">Error</p>
-                <p>{error}</p>
-              </div>
             )}
 
-            <div className="bg-white shadow-md overflow-x-auto rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead
-                  className={`bg-gray-50 ${
-                    isDarkMode ? "bg-gray-700" : "bg-gray-50"
-                  }`}
-                >
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`bg-white divide-y divide-gray-200 ${
-                    isDarkMode ? "bg-gray-800 text-white" : ""
-                  }`}
-                >
-                  {filteredProducts
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((product) => (
-                      <tr key={product._id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {product.name}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-gray-100 text-gray-800">
-                            {product.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          ${product.price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded ${
-                              product.inStock
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {product.inStock ? "In Stock" : "Out of Stock"}
-                          </span>
-                          {product.inStock && (
-                            <span className="ml-2 text-sm text-gray-500">
-                              (Stock: {product.stockQuantity})
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleUpdateProduct(product._id)}
-                            className="text-indigo-600 hover:text-indigo-900 mr-2"
-                          >
-                            <PencilIcon className="h-5 w-5 inline" />
-                          </button>
-                          <button
-                            onClick={() => confirmDeleteProduct(product._id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <TrashIcon className="h-5 w-5 inline" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={filteredProducts.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+            {/* Product Description */}
+            <div>
+              <h4 className="font-semibold mb-2">Description</h4>
+              <TextField
+                fullWidth
+                label="Product Description"
+                name="description"
+                multiline
+                rows={4}
+                value={formData.description || ''}
+                onChange={handleInputChange}
+                error={!!localErrors.description}
+                helperText={localErrors.description}
+                className="mb-4"
               />
             </div>
           </div>
-        </main>
-      </div>
 
-      {/* Confirmation Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this product?
-        </DialogContent>
-        <DialogActions>
-          <button
-            onClick={() => setOpenDialog(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDeleteProduct}
-            className="text-red-600 hover:text-red-800"
-          >
-            Delete
-          </button>
-        </DialogActions>
-      </Dialog>
-    </div>
+          {/* Right Column: Image Preview and Categories */}
+          <div className="space-y-4">
+            {/* Image Upload */}
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => document.getElementById('image-upload').click()}
+            >
+              <div className="w-full h-64 bg-gray-100 flex items-center justify-center border border-dashed border-gray-300 rounded-lg hover:bg-gray-200">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Product Preview"
+                    className="object-cover h-full w-full rounded-lg"
+                  />
+                ) : (
+                  <p className="text-gray-500 group-hover:text-gray-700">Click to upload image</p>
+                )}
+              </div>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              {errors.image && <p className="text-red-500 mt-2">{errors.image}</p>}
+            </div>
+
+            {/* Categories */}
+            <div>
+              <h4 className="font-semibold mb-2">Categories</h4>
+              <FormGroup>
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <FormControlLabel
+                      key={category._id}
+                      control={
+                        <Checkbox
+                          checked={formData.selectedCategories?.includes(category._id)}
+                          onChange={() => handleCategoryToggle(category._id)}
+                          color="primary"
+                        />
+                      }
+                      label={category.name}
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500">No categories available</p>
+                )}
+              </FormGroup>
+              {localErrors.categories && (
+                <p className="text-red-500 mt-1">{localErrors.categories}</p>
+              )}
+            </div>
+
+            {/* Subcategories */}
+            <div>
+              <h4 className="font-semibold mb-2">Subcategories</h4>
+              <FormGroup>
+                {subcategories.length > 0 ? (
+                  subcategories.map((subcategory) => (
+                    <FormControlLabel
+                      key={subcategory._id}
+                      control={
+                        <Checkbox
+                          checked={formData.selectedSubcategories?.includes(subcategory._id)}
+                          onChange={() => handleSubcategoryToggle(subcategory._id)}
+                          color="primary"
+                        />
+                      }
+                      label={subcategory.name}
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500">No subcategories available</p>
+                )}
+              </FormGroup>
+              {localErrors.subcategories && (
+                <p className="text-red-500 mt-1">{localErrors.subcategories}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Submit and Cancel buttons */}
+          <div className="col-span-2 flex justify-end space-x-4 mt-6">
+            <Button
+              onClick={() => navigate('/admin/products')}
+              variant="outlined"
+              color="secondary"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-600"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit" // Keep this as 'submit' to trigger the form submission
+              variant="contained"
+              color="primary"
+              disabled={isSubmitting || loading}
+              startIcon={loading && <CircularProgress size={20} />}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              {isSubmitting ? 'Submitting...' : 'Create Product'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 };
 
-export default Product;
+export default CreateProductForm;
